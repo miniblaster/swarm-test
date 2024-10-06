@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { INode, IEdge } from '../types';
+import React, { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
+import LegendItem from './LegendItem';
 
+import { INode, IEdge } from '../types';
 interface D3Node extends INode, d3.SimulationNodeDatum {}
 
 interface GraphVisualizationProps {
@@ -12,7 +13,11 @@ interface GraphVisualizationProps {
   selectedNodeId: string;
   selectedEdgeId: IEdge | null;
 }
-
+const legendItems = [
+  { color: '#FF4136', label: 'Topics' },
+  { color: '#0074D9', label: 'Participants' },
+  { color: '#2ECC40', label: 'Messages' },
+];
 const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   nodes,
   edges,
@@ -22,29 +27,65 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   selectedEdgeId,
 }) => {
   const containerRef = useRef<SVGSVGElement | null>(null);
-  const isConnectedNode = (nodeId: string) => {
-    return edges.some(
-      (edge) =>
-        (edge.from === selectedNodeId && edge.to === nodeId) ||
-        (edge.to === selectedNodeId && edge.from === nodeId)
-    );
-  };
 
-  const isConnectedEdge = (edge: { source: D3Node; target: D3Node }) =>
-    edge.source.id === selectedNodeId || edge.target.id === selectedNodeId;
-  const isSelectedEdge = (edge: { source: D3Node; target: D3Node }) => {
-    console.log(edge);
-    if (selectedEdgeId) {
-      if (
-        selectedEdgeId.from === edge.source.id &&
-        selectedEdgeId.to === edge.target.id
-      )
-        return true;
-    }
-    return false;
-  };
+  // Check if the node is connected to the selected node
+  const isConnectedNode = useCallback(
+    (nodeId: string) => {
+      return edges.some(
+        (edge) =>
+          (edge.from === selectedNodeId && edge.to === nodeId) ||
+          (edge.to === selectedNodeId && edge.from === nodeId)
+      );
+    },
+    [edges, selectedNodeId]
+  );
 
-  const drawGraph = () => {
+  // Check if the edge is connected to the selected node
+  const isConnectedEdge = useCallback(
+    (edge: { source: D3Node; target: D3Node }) =>
+      edge.source.id === selectedNodeId || edge.target.id === selectedNodeId,
+    [selectedNodeId]
+  );
+
+  // Check if the edge is selected
+  const isSelectedEdge = useCallback(
+    (edge: { source: D3Node; target: D3Node }) => {
+      if (selectedEdgeId) {
+        return (
+          selectedEdgeId.from === edge.source.id &&
+          selectedEdgeId.to === edge.target.id
+        );
+      }
+      return false;
+    },
+    [selectedEdgeId]
+  );
+
+  // Drag the node
+  const drag = useCallback(
+    (simulation: d3.Simulation<D3Node, undefined>) => {
+      return d3
+        .drag<SVGCircleElement, D3Node>()
+        .on('start', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on('end', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        });
+    },
+    [selectedNodeId]
+  );
+
+  // Draw the graph
+  const drawGraph = useCallback(() => {
     if (!containerRef.current) return;
 
     const svg = d3.select(containerRef.current);
@@ -62,18 +103,21 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
       });
 
     svg.call(zoom);
+
+    // Create simulation nodes and node map
     const simulationNodes: D3Node[] = nodes.map((node) => ({ ...node }));
     const nodeMap = new Map<string, D3Node>(
       simulationNodes.map((node) => [node.id, node as D3Node])
     );
 
+    // Filter valid edges
     const validEdges = edges
       .filter((edge) => nodeMap.has(edge.from) && nodeMap.has(edge.to))
       .map((edge) => ({
         source: nodeMap.get(edge.from)!,
         target: nodeMap.get(edge.to)!,
       }));
-
+    // Create simulation
     const simulation = d3
       .forceSimulation<D3Node>(simulationNodes)
       .force(
@@ -155,6 +199,7 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
       .attr('fill', '#000')
       .text((d) => d.id);
 
+    // Update the graph on each tick
     simulation.on('tick', () => {
       link
         .attr('x1', (d) => (d.source as D3Node).x!)
@@ -178,30 +223,11 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
         .attr('x', (d) => Math.max(20, Math.min(width - 20, d.x!)))
         .attr('y', (d) => Math.max(20, Math.min(height - 20, d.y!)) - 15);
     });
-
-    function drag(simulation: d3.Simulation<D3Node, undefined>) {
-      return d3
-        .drag<SVGCircleElement, D3Node>()
-        .on('start', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on('drag', (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on('end', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        });
-    }
-  };
+  }, [edges, selectedNodeId, selectedEdgeId]);
 
   useEffect(() => {
     drawGraph();
-  }, [nodes, edges, selectedNodeId, selectedEdgeId]);
+  }, [drawGraph]);
 
   return (
     <>
@@ -215,53 +241,13 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
           height: '650px',
         }}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '30px',
-          marginTop: '20px',
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-          {' '}
-          <div
-            style={{
-              width: '20px',
-              height: '20px',
-              backgroundColor: '#FF4136',
-              borderRadius: '50%',
-            }}
-          ></div>{' '}
-          Topics
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-          {' '}
-          <div
-            style={{
-              width: '20px',
-              height: '20px',
-              backgroundColor: '#0074D9',
-              borderRadius: '50%',
-            }}
-          ></div>{' '}
-          Participants
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-          {' '}
-          <div
-            style={{
-              width: '20px',
-              height: '20px',
-              backgroundColor: '#2ECC40',
-              borderRadius: '50%',
-            }}
-          ></div>{' '}
-          Messages
-        </div>
+      <div style={{ display: 'flex', gap: '30px', marginTop: '20px' }}>
+        {legendItems.map((item) => (
+          <LegendItem key={item.label} {...item} />
+        ))}
       </div>
     </>
   );
 };
 
-export default GraphVisualization;
+export default React.memo(GraphVisualization);

@@ -1,11 +1,12 @@
 import { useState, useEffect, Suspense } from 'react';
-import { fetchData } from './api/fetchData';
 import GraphVisulization from './components/GraphVisulization';
 import NodeDetails from './components/NodeDetails';
-import { IEdge, INode } from './types';
 import EdgeDetails from './components/EdgeDetails';
-import useIsMobile from './hook/useIsMobile';
 import Loading from './components/Loading';
+
+import { fetchData } from './api/fetchData';
+import useIsMobile from './hook/useIsMobile';
+import { IEdge, INode } from './types';
 
 function App() {
   const [data, setData] = useState({ nodes: [], edges: [] });
@@ -31,6 +32,8 @@ function App() {
     })();
   }, []);
 
+  console.log(data);
+
   const handleNodeClick = (node: INode) => {
     setSelectedNode(node);
   };
@@ -38,8 +41,6 @@ function App() {
   const handleEdgeClick = (edge: IEdge) => {
     setSelectedEdge(edge);
   };
-  console.log(selectedEdge);
-  console.log(data);
 
   return (
     <div
