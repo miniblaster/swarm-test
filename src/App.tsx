@@ -1,20 +1,21 @@
 import { useState, useEffect, Suspense } from 'react';
+
 import GraphVisulization from './components/GraphVisulization';
 import NodeDetails from './components/NodeDetails';
 import EdgeDetails from './components/EdgeDetails';
 import Loading from './components/Loading';
 
-import { fetchData } from './api/fetchData';
 import useIsMobile from './hook/useIsMobile';
+import { fetchData } from './api/fetchData';
 import { IEdge, INode } from './types';
 
-function App() {
+const App = () => {
   const [data, setData] = useState({ nodes: [], edges: [] });
   const [selectedNode, setSelectedNode] = useState<INode | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<IEdge | null>(null);
-  const isMobile = useIsMobile();
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     (async () => {
@@ -31,8 +32,6 @@ function App() {
       }
     })();
   }, []);
-
-  console.log(data);
 
   const handleNodeClick = (node: INode) => {
     setSelectedNode(node);

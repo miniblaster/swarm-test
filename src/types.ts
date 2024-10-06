@@ -29,6 +29,7 @@ type IEdgeType =
   | 'addsInfo'
   | 'corrects'
   | 'summarizes';
+
 export interface IEdge {
   from: string;
   to: string;
