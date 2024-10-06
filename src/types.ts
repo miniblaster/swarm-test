@@ -35,3 +35,8 @@ export interface IEdge {
   to: string;
   type: IEdgeType;
 }
+
+export interface IData {
+  nodes: INode[];
+  edges: IEdge[];
+}

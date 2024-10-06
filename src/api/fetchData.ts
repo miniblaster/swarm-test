@@ -1,11 +1,11 @@
 export const fetchData = async () => {
   try {
     const response = await fetch(
-      `${process.env.REACT_APP_JSONBIN_API_ENDPOINT}`,
+      `${process.env.NEXT_PUBLIC_APP_JSONBIN_API_ENDPOINT}`,
       {
         method: 'GET',
         headers: {
-          'X-Access-Key': process.env.REACT_APP_JSONBIN_ACCESS_KEY as string,
+          'X-Access-Key': process.env.NEXT_PUBLIC_APP_JSONBIN_ACCESS_KEY as string,
         },
       }
     );

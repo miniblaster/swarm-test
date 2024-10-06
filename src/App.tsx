@@ -7,10 +7,10 @@ import Loading from './components/Loading';
 
 import useIsMobile from './hook/useIsMobile';
 import { fetchData } from './api/fetchData';
-import { IEdge, INode } from './types';
+import { IEdge, INode, IData } from './types';
 
 const App = () => {
-  const [data, setData] = useState({ nodes: [], edges: [] });
+  const [data, setData] = useState<IData>({ nodes: [], edges: [] });
   const [selectedNode, setSelectedNode] = useState<INode | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<IEdge | null>(null);
   const [error, setError] = useState<string | null>(null);
