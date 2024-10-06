@@ -10,6 +10,7 @@ interface GraphVisualizationProps {
   onNodeClick: (node: INode) => void;
   onEdgeClick: (edge: IEdge) => void;
   selectedNodeId: string;
+  selectedEdgeId: IEdge | null;
 }
 
 const GraphVisualization: React.FC<GraphVisualizationProps> = ({
@@ -18,16 +19,38 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
   onNodeClick,
   onEdgeClick,
   selectedNodeId,
+  selectedEdgeId,
 }) => {
   const containerRef = useRef<SVGSVGElement | null>(null);
+  const isConnectedNode = (nodeId: string) => {
+    return edges.some(
+      (edge) =>
+        (edge.from === selectedNodeId && edge.to === nodeId) ||
+        (edge.to === selectedNodeId && edge.from === nodeId)
+    );
+  };
 
-  useEffect(() => {
+  const isConnectedEdge = (edge: { source: D3Node; target: D3Node }) =>
+    edge.source.id === selectedNodeId || edge.target.id === selectedNodeId;
+  const isSelectedEdge = (edge: { source: D3Node; target: D3Node }) => {
+    console.log(edge);
+    if (selectedEdgeId) {
+      if (
+        selectedEdgeId.from === edge.source.id &&
+        selectedEdgeId.to === edge.target.id
+      )
+        return true;
+    }
+    return false;
+  };
+
+  const drawGraph = () => {
     if (!containerRef.current) return;
 
     const svg = d3.select(containerRef.current);
     svg.selectAll('*').remove();
 
-    const width = containerRef.current.clientWidth;
+    const width = containerRef?.current?.clientWidth;
     const height = 600;
     const g = svg.append('g');
 
@@ -72,6 +95,12 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
       .join('line')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
+      .attr('stroke', (d) =>
+        isSelectedEdge(d) ? 'purple' : isConnectedEdge(d) ? '#FFA500' : '#999'
+      )
+      .attr('stroke-width', (d) =>
+        isConnectedEdge(d) || isSelectedEdge(d) ? 3 : 2
+      )
       .on('click', (event, d) => {
         const originalEdge = edges.find(
           (edge) => edge.from === d.source.id && edge.to === d.target.id
@@ -88,8 +117,16 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
       .data(simulationNodes)
       .join('circle')
       .attr('r', 10)
-      .attr('stroke', (d) => (d.id === selectedNodeId ? '#FFA500' : '#fff'))
-      .attr('stroke-width', (d) => (d.id === selectedNodeId ? 3 : 1.5))
+      .attr('stroke', (d) =>
+        d.id === selectedNodeId
+          ? 'purple'
+          : isConnectedNode(d.id)
+          ? '#FFA500'
+          : '#fff'
+      )
+      .attr('stroke-width', (d) =>
+        d.id === selectedNodeId || isConnectedNode(d.id) ? 3 : 1.5
+      )
       .attr('fill', (d) =>
         d.type === 'participant'
           ? '#0074D9'
@@ -127,19 +164,19 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
 
       node
         .attr('cx', (d) => {
-          d.x = Math.max(50, Math.min(width - 50, d.x!));
+          d.x = Math.max(20, Math.min(width - 20, d.x!));
           return d.x!;
         })
         .attr('cy', (d) => {
           if (d.y && d.y > height) {
-            d.y = height - 30;
-          } else d.y = Math.max(30, Math.min(height - 0, d.y!));
+            d.y = height - 20;
+          } else d.y = Math.max(20, Math.min(height - 0, d.y!));
           return d.y!;
         });
 
       labels
         .attr('x', (d) => Math.max(20, Math.min(width - 20, d.x!)))
-        .attr('y', (d) => Math.max(25, Math.min(height - 10, d.y!)) - 15);
+        .attr('y', (d) => Math.max(20, Math.min(height - 20, d.y!)) - 15);
     });
 
     function drag(simulation: d3.Simulation<D3Node, undefined>) {
@@ -160,7 +197,11 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
           d.fy = null;
         });
     }
-  }, [nodes, edges, onNodeClick, onEdgeClick, selectedNodeId]);
+  };
+
+  useEffect(() => {
+    drawGraph();
+  }, [nodes, edges, selectedNodeId, selectedEdgeId]);
 
   return (
     <>
