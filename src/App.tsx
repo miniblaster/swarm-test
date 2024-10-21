@@ -40,7 +40,7 @@ const App = () => {
         "Content-Type": "application/json",
       },
     });
-    console.log("==========", response.message);
+    console.log("==========", response.body);
   }
 
   const handleNodeClick = (node: INode) => {
