@@ -33,6 +33,16 @@ const App = () => {
     })();
   }, []);
 
+  const handleHeaderClick = async () => {
+    const response: any = await fetch("/api/test", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("==========", response);
+  }
+
   const handleNodeClick = (node: INode) => {
     setSelectedNode(node);
   };
@@ -50,7 +60,7 @@ const App = () => {
         padding: '20px',
       }}
     >
-      <h1 style={{ textAlign: 'center' }}>Conversation Graph</h1>
+      <h1 style={{ textAlign: 'center' }} onClick={handleHeaderClick}>Conversation Graph</h1>
       <Suspense fallback={<Loading />}>
         {isLoading ? (
           <Loading />
