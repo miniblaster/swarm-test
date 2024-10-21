@@ -1,13 +1,13 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense } from "react";
 
-import GraphVisulization from './components/GraphVisulization';
-import NodeDetails from './components/NodeDetails';
-import EdgeDetails from './components/EdgeDetails';
-import Loading from './components/Loading';
+import GraphVisulization from "./components/GraphVisulization";
+import NodeDetails from "./components/NodeDetails";
+import EdgeDetails from "./components/EdgeDetails";
+import Loading from "./components/Loading";
 
-import useIsMobile from './hook/useIsMobile';
-import { fetchData } from './api/fetchData';
-import { IEdge, INode, IData } from './types';
+import useIsMobile from "./hook/useIsMobile";
+import { fetchData } from "./api/fetchData";
+import { IEdge, INode, IData } from "./types";
 
 const App = () => {
   const [data, setData] = useState<IData>({ nodes: [], edges: [] });
@@ -25,8 +25,8 @@ const App = () => {
         const fetchedData = await fetchData();
         setData({ nodes: fetchedData.nodes, edges: fetchedData.edges });
       } catch (err) {
-        setError('Failed to fetch data. Please try again later.');
-        console.error('Error fetching data:', err);
+        setError("Failed to fetch data. Please try again later.");
+        console.error("Error fetching data:", err);
       } finally {
         setIsLoading(false);
       }
@@ -40,8 +40,9 @@ const App = () => {
         "Content-Type": "application/json",
       },
     });
-    console.log("==========", response.message);
-  }
+    const data = await response.json();
+    console.log("==========", data.message);
+  };
 
   const handleNodeClick = (node: INode) => {
     setSelectedNode(node);
@@ -54,18 +55,20 @@ const App = () => {
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '20px',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "20px",
       }}
     >
-      <h1 style={{ textAlign: 'center' }} onClick={handleHeaderClick}>Conversation Graph</h1>
+      <h1 style={{ textAlign: "center" }} onClick={handleHeaderClick}>
+        Conversation Graph
+      </h1>
       <Suspense fallback={<Loading />}>
         {isLoading ? (
           <Loading />
         ) : error ? (
-          <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>
+          <div style={{ color: "red", textAlign: "center" }}>{error}</div>
         ) : (
           <>
             <GraphVisulization
@@ -73,14 +76,14 @@ const App = () => {
               edges={data.edges}
               onNodeClick={handleNodeClick}
               onEdgeClick={handleEdgeClick}
-              selectedNodeId={selectedNode?.id || ''}
+              selectedNodeId={selectedNode?.id || ""}
               selectedEdgeId={selectedEdge ? selectedEdge : null}
             />
             <div
               style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '20px' : '60px',
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                gap: isMobile ? "20px" : "60px",
               }}
             >
               {selectedNode && <NodeDetails node={selectedNode} />}
@@ -91,6 +94,6 @@ const App = () => {
       </Suspense>
     </div>
   );
-}
+};
 
 export default App;
