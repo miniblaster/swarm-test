@@ -81,7 +81,7 @@ const GraphVisualization: React.FC<GraphVisualizationProps> = ({
           d.fy = null;
         });
     },
-    [selectedNodeId]
+    []
   );
 
   // Draw the graph
